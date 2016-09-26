@@ -61,7 +61,7 @@ namespace GhostDisk.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à .
+        ///   Recherche une chaîne localisée semblable à toto.
         /// </summary>
         internal static string ERROR_BACKUP_FOLDER_UNEXIST {
             get {

@@ -37,10 +37,10 @@ namespace GhostDisk
         //common ? Gestion des erreurs ici ou ds la bdd ?
         private Options LoadOptions(int profile = 1)
         {
-            SQLiteHelper SQLiteHelper = new SQLiteHelper();
+            Requests request = Requests.RequestsInstance;
             //test suppr bdd entre 2 appels
             //charger les valeur otpion bdd verif loaded avant utiliser option
-            return SQLiteHelper.getOptions(profile);
+            return request.getOptions(profile);
         }
 
         private void B_Sauvegarder_Click(object sender, RoutedEventArgs e)
@@ -67,8 +67,8 @@ namespace GhostDisk
             {
                 TB_folderToScan.Text = FBD_sourcePath.SelectedPath;
 
-                SQLiteHelper SQLiteHelper = new SQLiteHelper();
-                SQLiteHelper.saveLastSourceFolder(1, FBD_sourcePath.SelectedPath);
+                Requests request = Requests.RequestsInstance;
+                request.saveLastSourceFolder(1, FBD_sourcePath.SelectedPath);
             }
         }
 
@@ -88,8 +88,8 @@ namespace GhostDisk
             {
                 TB_backupFolder.Text = FBD_backupPath.SelectedPath;
 
-                SQLiteHelper SQLiteHelper = new SQLiteHelper();
-                SQLiteHelper.saveLastBackupFolder(1, FBD_backupPath.SelectedPath);
+                Requests request = Requests.RequestsInstance;
+                request.saveLastBackupFolder(1, FBD_backupPath.SelectedPath);
             }
         }
 

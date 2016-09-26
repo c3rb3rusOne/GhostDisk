@@ -20,9 +20,16 @@ namespace GhostDisk.BO
 
         // DB ERRORS
 
-        // Erreur à la création de la base de données.
-        public const string DB_CREATION_ERROR_TITLE = "Erreur de création de la base de donnée";
-        public const string DB_CREATION_ERROR_MSG = "Emplacement innacessible ou droits d'administration insuffisants.";
+        // Erreurs de connexion à la bdd
+        public enum erreurCNX : short { NoError = 0, InexistantDB = 1, ConnexionError = 2, NonInitailized = 3 };
+
+        // Messages d'erreurs correspondants
+        public static readonly string[] DB_CREATION_ERROR_TITLE = {"Ok", "Erreur création bdd", "Erreur de connexion", "Bdd vide"};
+        public static readonly string[] DB_CREATION_ERROR_MSG = {"GhostDisk s'est correctement initialisé", "La bdd n'a pu être créée", "Erreur d'accès aux règlages", "Erreur d'initialisation des règlages" }; //base reessayer ...
+        //public const string DB_CREATION_ERROR_MSG = "Emplacement innacessible ou droits d'administration insuffisants.";
+
+
+
 
 
 

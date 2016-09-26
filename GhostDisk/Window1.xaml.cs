@@ -25,16 +25,16 @@ namespace GhostDisk
     public partial class Window1 : Window
     {
         Options backupOptions = null;
-        private readonly SQLiteHelper SQLiteHelper = null;
+        private readonly Requests request = null;
 
         public Window1()
         {
             InitializeComponent();
-            
-            SQLiteHelper = new SQLiteHelper();
+
+            request = Requests.RequestsInstance;
 
             //charger les valeur otpion bdd verif loaded avant utiliser option
-            this.backupOptions = SQLiteHelper.getOptions(1);
+            this.backupOptions = request.getOptions(1);
 
             if (backupOptions.backupSomeFiles)
                 CB_backupSomeFiles.IsChecked = true;
@@ -73,7 +73,7 @@ namespace GhostDisk
             try
             {
                 // 1 = profile 1 const error, erreurs bdd seulement constante debug
-                SQLiteHelper.setBackupTxtFiles(1, backupOptions.backupSomeFiles);
+                request.setBackupTxtFiles(1, backupOptions.backupSomeFiles);
             }
             catch (Exception)
             {
@@ -103,7 +103,7 @@ namespace GhostDisk
 
             try
             {
-                SQLiteHelper.setBackupTxtFilesMaxSize(1, maxFileSize); // 1 = profile 1 try ou test retour*/
+                request.setBackupTxtFilesMaxSize(1, maxFileSize); // 1 = profile 1 try ou test retour*/
             }
             catch (Exception)
             {
@@ -127,7 +127,7 @@ namespace GhostDisk
 
             int indexUnitselected = CBX_sizeUnits.SelectedIndex + 1; // Différence index bdd et comboBox
 
-            SQLiteHelper.setBackupTxtFilesMaxSizeUnit(1, indexUnitselected); // 1 = profile 1*/
+            request.setBackupTxtFilesMaxSizeUnit(1, indexUnitselected); // 1 = profile 1*/
         }
 
         private void TB_extensionsToSave_TextChanged(object sender, TextChangedEventArgs e) //not text_changed (sinon a chaque lettr)...
@@ -161,7 +161,7 @@ namespace GhostDisk
 
                 if (!modifiedExtensionToSave.Contains(extension)) //deporter ds fonction insertion
                 {
-                    if (SQLiteHelper.deleteBackupExtensions(1, extension))
+                    if (request.deleteBackupExtensions(1, extension))
                         ; // cons error
                 }
             }
@@ -171,7 +171,7 @@ namespace GhostDisk
             {
                 // Si l'extension n'existe pas encore en bdd l'ajouter
                 if (extension.StartsWith(".") && extension.Length > 1 && !backupOptions.extensionsToSave.Contains(extension))
-                    SQLiteHelper.setBackupExtensions(1, extension);
+                    request.setBackupExtensions(1, extension);
             }
             
             // Ou plus simplement suppr toutes les extensions et toutes les réinsérer !

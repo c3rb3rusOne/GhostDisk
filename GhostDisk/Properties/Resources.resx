@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ERROR_BACKUP_FOLDER_UNEXIST" xml:space="preserve">
-    <value />
+    <value>toto</value>
   </data>
   <data name="ERROR_MAIN_FOLDER_UNEXIST" xml:space="preserve">
     <value>Le dossier à sauvegarder n'existe plus ou est innaccessible.</value>
