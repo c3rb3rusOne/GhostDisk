@@ -5,15 +5,14 @@ using System.Data.SQLite;
 using System.IO;
 using GhostDisk.BO;
 
-// for messageBox
-
 namespace GhostDisk.DAL
 {
     class SQLiteHelper
     {
-        const string DBName = "GhostDiskDB.db";
+        const string DBName = Constantes.DBName; // Copie locale plus rapide à atteindre
         private SQLiteConnection cnx = null;
 
+        // Plus utile car classe dérivé + singleton
         /*protected SQLiteHelper()
         {
             connexion();
@@ -21,7 +20,6 @@ namespace GhostDisk.DAL
 
         protected Constantes.erreurCNX connexion()
         {
-            // test si la bdd existe sinon la crée
             bool exist = File.Exists(DBName);
 
             // Test de l'existance du fichier de bdd et tentative de création de celui-ci le cas échéant
@@ -55,7 +53,10 @@ namespace GhostDisk.DAL
             {
                 SQLiteConnection.CreateFile(DBName);
             }
-            catch (Exception) {}
+            catch (Exception)
+            {
+                return false;
+            }
             
             return true;
         }
@@ -68,8 +69,12 @@ namespace GhostDisk.DAL
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Erreur requête");
-                //MessageBox.Show(ex.Message);
+                if (Constantes.DEBUG)
+                {
+                    System.Windows.MessageBox.Show("Erreur requête****************");
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+
                 return false;
             }
 
@@ -78,21 +83,26 @@ namespace GhostDisk.DAL
 
         protected SQLiteDataReader executeUniqueRequestQuery(string query)
         {
+            SQLiteDataReader reader = null;
+
             try
             {
                 SQLiteCommand commande = new SQLiteCommand(query, this.cnx); //!attention fermeture intempestive cnx
-                SQLiteDataReader reader = commande.ExecuteReader();
+                reader = commande.ExecuteReader();
                 reader.Read();
-
-                return reader;
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Erreur requête****************");
-                //MessageBox.Show(ex.Message);
+                if (Constantes.DEBUG)
+                {
+                    System.Windows.MessageBox.Show("Erreur requête****************");
+                    System.Windows.MessageBox.Show(ex.Message);
+
+                    return null;
+                }
             }
 
-            return null;
+            return reader;
         }
 
         protected SQLiteDataReader/*List<string>*/ executeRequestQuery(string query)
@@ -111,8 +121,9 @@ namespace GhostDisk.DAL
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Erreur requête");
-                //MessageBox.Show(ex.Message);
+                System.Windows.MessageBox.Show("Erreur requête****************");
+                System.Windows.MessageBox.Show(ex.Message);
+
                 return null;
             }
 

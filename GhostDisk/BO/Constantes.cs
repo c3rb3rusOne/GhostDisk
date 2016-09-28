@@ -10,11 +10,16 @@ namespace GhostDisk.BO
     public static class Constantes
     {
         //public enum Units : ulong { Ko = 1024, Mo = 1048576, Go = 1073741824 };
+        //public readonly Dictionary<string, int> = Dictionary {{"abc",1}, {"def",2}, {"ghi",3}};
         public static readonly int[] valuesOfUnitsInKb = {1024, 1048576, 1073741824 }; //Ko, Mo, Go in Kb
 
-        /*public readonly Dictionary<string, int> = Dictionary {
-            {"abc",1}, {"def",2}, {"ghi",3}
-        };*/
+        /********************************************** CONFIG ***************************************************************/
+        public const bool DEBUG = true;
+        public const string DBName = "GhostDiskDB.db";
+
+        public const int defaultFileToSaveUnitIndex = 1; // 1 -> Ko
+        public const int defaultFileToSaveMaxSize = 10;
+        /********************************************** FIN CONFIG ***********************************************************/
 
         /********************************************* ERRORS ****************************************************************/
 
@@ -29,7 +34,7 @@ namespace GhostDisk.BO
         //public const string DB_CREATION_ERROR_MSG = "Emplacement innacessible ou droits d'administration insuffisants.";
 
 
-
+        /********************************************* FIN ERRORS ************************************************************/
 
 
 
