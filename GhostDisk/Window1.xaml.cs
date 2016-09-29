@@ -161,7 +161,6 @@ namespace GhostDisk
             int indexUnitSelected = CBX_sizeUnits.SelectedIndex + 1; // +1 -> Différence index bdd et index comboBox
 
             backupOptions.sizeUnitIndex = indexUnitSelected;
-
             request.saveBackupFilesMaxSizeUnit(1, indexUnitSelected); // 1 = profile 1
         }
 
@@ -263,6 +262,7 @@ namespace GhostDisk
             if (!this.IsInitialized) //  Sinon pb lors du chargement initial de la valeur - !this.IsLoaded -> probleme à la sortie
                 return;
 
+            backupOptions.UseIncludeExcludeFilter = true;
             request.saveIncludeExcludeFilterOptionState(1, true);
 
             RB_inclusion.IsEnabled = true;
@@ -275,6 +275,7 @@ namespace GhostDisk
             if (!this.IsInitialized) //  Sinon pb lors du chargement initial de la valeur - !this.IsLoaded -> probleme à la sortie
                 return;
 
+            backupOptions.UseIncludeExcludeFilter = false;
             request.saveIncludeExcludeFilterOptionState(1, false);
 
             RB_inclusion.IsEnabled = false;
@@ -287,6 +288,7 @@ namespace GhostDisk
             if (!this.IsInitialized) //  Sinon pb lors du chargement initial de la valeur - !this.IsLoaded -> probleme à la sortie
                 return;
 
+            backupOptions.includeExcludeFilterType = 1;
             request.saveIncludeExcludeFilterType(1, 1);
         }
 
@@ -296,10 +298,14 @@ namespace GhostDisk
             if (!this.IsInitialized) //  Sinon pb lors du chargement initial de la valeur - !this.IsLoaded -> probleme à la sortie
                 return;
 
+            backupOptions.includeExcludeFilterType = 2;
             request.saveIncludeExcludeFilterType(1, 2);
         }
 
         // persistance de l'objet option; à appeler lorsque la fenêtre se ferme ou par bouton; EntityFramework; ORM
-        //private void persistanceOptions() {}
+        private void F_options_Unloaded(object sender, RoutedEventArgs e)
+        {
+            //request.persistOptions(backupOptions, 1);
+        }
     }
 }

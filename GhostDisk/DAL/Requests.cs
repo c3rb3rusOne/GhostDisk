@@ -198,5 +198,16 @@ namespace GhostDisk.DAL
 
             return ObjectsFactory.newOptions(reader, extensionsToBackup, extensionsToFilter);
         }
+
+        // Persistance d'un objet Options (dans le cas ou toutes les options sont enregistrés à la fermeture de la fenêtre)
+        public bool persistOptions(Options options, int profil=1)
+        {
+            int useBackupSomeFiles = options.backupSomeFiles ? 1 : 0;
+            int UseIncludeExcludeFilter = options.UseIncludeExcludeFilter ? 1 : 0;
+
+            return executeQuery($"UPDATE options SET useBackupSomeFiles='{useBackupSomeFiles}', maxSizeOfBackupFiles='{options.FileToBackupMaxSize}', " +
+                                $"sizeUnit_id='{options.sizeUnitIndex}', useIncludeExcludeFilter='{UseIncludeExcludeFilter}', " +
+                                $"includeExcludeFilterType='{options.includeExcludeFilterType}'");
+        }
     }
 }

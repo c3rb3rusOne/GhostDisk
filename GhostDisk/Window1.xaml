@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GhostDisk"
         mc:Ignorable="d"
-        Title="GhostDisk: Options" Height="523.809" Width="613.385">
+        Title="GhostDisk: Options" Height="523.809" Width="613.385" Unloaded="F_options_Unloaded">
     <Grid>
         <Label x:Name="label" Content="" HorizontalAlignment="Left" Margin="31,35,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.548,-0.266"/>
         <Label x:Name="label_Copy1" Content="" HorizontalAlignment="Left" Margin="317,345,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.548,-0.266"/>
