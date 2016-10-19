@@ -95,11 +95,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AffichageErreurs.cs" />
+    <Compile Include="BO\AppsParameters.cs" />
     <Compile Include="BO\Constantes.cs" />
     <Compile Include="BO\Options.cs" />
+    <Compile Include="BO\Profile.cs" />
+    <Compile Include="Composants\GDListBox.cs" />
     <Compile Include="DAL\Requests.cs" />
-    <Compile Include="Window1.xaml.cs">
-      <DependentUpon>Window1.xaml</DependentUpon>
+    <Compile Include="F_options.xaml.cs">
+      <DependentUpon>F_options.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UC_scanInProgress.xaml.cs">
+      <DependentUpon>UC_scanInProgress.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -119,12 +125,23 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Window1.xaml">
+    <Page Include="F_options.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="F_newProfile.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UC_scanInProgress.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="F_newProfile.xaml.cs">
+      <DependentUpon>F_newProfile.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

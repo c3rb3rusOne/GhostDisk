@@ -3,18 +3,33 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 //using System.Text;
 //using System.Threading.Tasks;
 using System.Windows;
 using GhostDisk.BO;
 
+//! Diag activité à modif
+//! ATTENTION out of memory et problèmes de droits sur larges volumes !
+
 namespace GhostDisk.BLL
 {
     class ScanDisk
     {
+        // Ou public event EventHandler<paramsEvent> updateProgressbar; // paramEvent = objet perso
+        public event EventHandler<int> updateProgressbar;
+        public event EventHandler<int> initializeProgressbar;
+
+        // Test, pour compter le nb total de fichiers ds un dossier/volume
+        private long nbFilesToScan = 0;
+
         // Nombre de caractères du chemin du dossier (ou lecteur) à sauvegarder
         private ushort BaseFolderPathLenght = 0;
+
         private Options options = null;
+
+        private int cursor = 1; //? long
+        private int refreshInterval = 0;
 
         public ScanDisk(Options options)
         {
@@ -24,7 +39,7 @@ namespace GhostDisk.BLL
         }
 
         // Initialisation d'une sauvegarde
-        public bool Start_ScanDisk(string folderPath, string backupPath)
+        public bool Start_ScanDisk(string folderPath, string backupPath, CancellationToken CancellationToken)
         {
             // Test l'existance des dossiers à sauvegarder et de sauvegarde
             if (folderPath == null || !Directory.Exists(folderPath))
@@ -41,15 +56,37 @@ namespace GhostDisk.BLL
             
             this.BaseFolderPathLenght = (ushort)folderPath.Length;
 
-            bool error = FolderScan_RecursiveMode(folderPath, backupPath);
+            // Initialiser refreshInterval
+            //! Beaucoup trop long sur des gros volumes
+            this.countNbFilesInDirectoryAndSubdirectory(new DirectoryInfo(folderPath));
+            MessageBox.Show("nb files to scan : " + nbFilesToScan.ToString());
+            //DirectoryInfo .GetFiles(folderPath, "*.*", SearchOption.AllDirectories).Length - 1;//Directory.GetFiles(folderPath).Length; //! Différents selons les options (remarque ça passe qd même car updater avant continue...)
+            
+            // Avantage ne rafraîchit pas à ts les fichiers pr de grands nb de fichiers
+            /*decimal nbSteps = Math.Round(decimal.Divide(100, nbFilesToScan), 3);
+            nbSteps = Math.Round(decimal.Divide(1, nbSteps), 3);
+            this.refreshInterval = Convert.ToInt32(Math.Ceiling(nbSteps)); // Ou cast direct ou decimal.toInt32, ou floor -> arrondi inférieur
+            ;*/
 
-            if (!error)
-                return false;
-            return true;
+            // Par fichier si nbFichiers<=100 sinon par pas de +- 2%
+            if (nbFilesToScan > 100)
+            {
+                decimal deuxPrct = Math.Round(decimal.Divide(nbFilesToScan * 2, 100));
+                this.refreshInterval = Convert.ToInt32(deuxPrct);
+            }
+            else
+                this.refreshInterval = 1;
+           
+            // Préparer la progressbar
+            this.initializeProgressbar?.Invoke(new object(), (int)nbFilesToScan); 
+
+            bool error = FolderScan_RecursiveMode(folderPath, backupPath, CancellationToken);
+
+            return error;
         }
         
         // Méthode récursive dossier par dossier (fichier par fichier ?)
-        private bool FolderScan_RecursiveMode(string folderPath, string backupPath)
+        private bool FolderScan_RecursiveMode(string folderPath, string backupPath, CancellationToken CancellationToken)
         {
             // Si l'un des dossier dossier à sauvegarder ou dossier cible est manquant, sortir - Demander création dossier cible ?
             if (folderPath == null || !Directory.Exists(folderPath))
@@ -62,6 +99,8 @@ namespace GhostDisk.BLL
             foreach (string file in Directory.GetFiles(folderPath)) //'System.UnauthorizedAccessException'
             {
                 FileInfo fileInfo = null;
+                //fonction update si > 50 fich pr 3000 //!
+                throwUpdateProgressbar();
 
                 // Test si le fichier source existe toujours
                 if (!System.IO.File.Exists(file))
@@ -78,13 +117,20 @@ namespace GhostDisk.BLL
 
                 // Créer le fichier de sauvegarde
                 CreateFile(fileInfo, backupPath);
+                
+                // Vérifier si il n'y a pas eu une annulation de la tâche
+                if (CancellationToken.IsCancellationRequested)
+                {
+                    // ou tryy/catch return ici
+                    CancellationToken.ThrowIfCancellationRequested();
+                }
             }
 
             // Pour chaques sous-dossiers, créer le dossier dans le dossier accueillant la sauvegarde et rappeler la fonction
             foreach (string folderInFolder in Directory.GetDirectories(folderPath))
             {
                 CreateFolder(folderInFolder, backupPath);
-                FolderScan_RecursiveMode(folderInFolder, backupPath);
+                FolderScan_RecursiveMode(folderInFolder, backupPath, CancellationToken);
             }
 
             return true;
@@ -119,7 +165,6 @@ namespace GhostDisk.BLL
             // Si raccourci, le copier
             if (OriginalFileInfo.Extension.Equals(".lnk"))
             {
-                //System.IO.File.Copy(OriginalFilePath, BackupPath, true);
                 System.IO.File.Copy(OriginalFileInfo.FullName, BackupPath, true);
                 return true;
             }
@@ -138,8 +183,6 @@ namespace GhostDisk.BLL
             if (OriginalFileInfo.Extension.Equals(".JPG")) //minuscules const
             {
                 Image thumbnailForFile = GetThumbnail(OriginalFileInfo.FullName);
-                //Image image = Image.FromFile(OriginalFileInfo.FullName);
-                //Image thumb = image.GetThumbnailImage(120, 120, () => false, IntPtr.Zero);
 
                 thumbnailForFile.Save(BackupPath + OriginalFileInfo.Name);
                 thumbnailForFile.Dispose();
@@ -152,7 +195,6 @@ namespace GhostDisk.BLL
             {
                 using (System.IO.FileStream fs = System.IO.File.Create(BackupPath))
                 {
-                    //fs.WriteByte(50);
                     // Si exe, créer fichier vierge et copier l'icone.
                     if (OriginalFileInfo.Extension.Equals(".exe"))
                     {
@@ -164,7 +206,7 @@ namespace GhostDisk.BLL
                         if (iconForFile != null)
                             iconForFile.Save(fs); */
 
-                        iconForFile.Dispose();
+                        iconForFile?.Dispose();
                         fs.Dispose();
 
                         return true;
@@ -232,5 +274,53 @@ namespace GhostDisk.BLL
             return pThumbnail;
         }
 
+        private void throwUpdateProgressbar()
+        {
+            if (cursor >= this.refreshInterval)
+            {
+                cursor = 1;
+                this.updateProgressbar?.Invoke(new object(), this.refreshInterval);
+            }
+            else
+            {
+                cursor++;
+            }
+        }
+
+        // Ok, mais trop long (plus de 3 min) pr les gros volumes
+        private bool countNbFilesInDirectoryAndSubdirectory(DirectoryInfo di)
+        {
+            // Compter les fichiers du dossier
+            try
+            {
+                if ((di.Attributes & FileAttributes.System) == 0) // If(directory != @"e:/System Volume Information")
+                {
+                    if (di.GetFiles().Length>0)
+                        nbFilesToScan += di.GetFiles().Length;
+                }
+            }
+            catch (Exception exception)
+            {
+                //MessageBox.Show("1 " + exception.ToString());
+                return false; //noError=
+            }
+            
+            // Puis ceux de chacun des sous-dossier
+            try
+            {
+                foreach (var subDirectory in di.EnumerateDirectories())
+                {
+                    countNbFilesInDirectoryAndSubdirectory(subDirectory);
+                }
+            }
+            catch (Exception exception)
+            {
+                //MessageBox.Show("2 " + exception.ToString());
+                return false;
+            }
+            
+
+            return true;
+        }
     }
 }

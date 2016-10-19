@@ -1,0 +1,50 @@
+﻿<Window x:Name="F_options" x:Class="GhostDisk.Window1"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GhostDisk"
+        xmlns:composants="clr-namespace:GhostDisk.Composants"
+        mc:Ignorable="d"
+        Title="GhostDisk: Options" Height="523.809" Width="613.385" Unloaded="F_options_Unloaded">
+    <Grid>
+        <TabControl x:Name="tabControl">
+            <TabItem x:Name="TI_profil" Header="Profils" RenderTransformOrigin="1.621,0.591">
+                <TabItem.Background>
+                    <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                        <GradientStop Color="#FFF0F0F0" Offset="0"/>
+                        <GradientStop Color="#FFE5E5E5" Offset="1"/>
+                    </LinearGradientBrush>
+                </TabItem.Background>
+                <Grid Background="White">
+                    <Label x:Name="L_profils" Content="Gestions des profils de sauvegarde" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Top" RenderTransformOrigin="0.737,0.385"/>
+                    <composants:GDListBox x:Name="LB_profils" HorizontalAlignment="Left" Height="224" Margin="28,117,0,0" VerticalAlignment="Top" Width="210" SelectionChanged="LB_profils_SelectionChanged" DisplayMemberPath="name" SelectedValuePath="id"/>
+                    <Label x:Name="L_profilsActuel" Content="Profil actuel: " HorizontalAlignment="Center" Margin="90,43,431,0" VerticalAlignment="Top" RenderTransformOrigin="0.737,0.385"/>
+                    <Button x:Name="button" Content="Ajouter" HorizontalAlignment="Left" Margin="293,143,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.571,-0.85" Click="AddNewProfile_Click"/>
+                    <Button x:Name="B_delete" Content="Supprimer" HorizontalAlignment="Left" Margin="420,143,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.571,-0.85" Click="DeleteProfile_Click"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Options">
+                <Grid x:Name="G_baseOptions" Background="White">
+                    <Label x:Name="label_Copy1" Content="" HorizontalAlignment="Left" Margin="317,345,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.548,-0.266"/>
+                    <Label x:Name="label_Copy2" Content="" HorizontalAlignment="Left" Margin="31,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.548,-0.266"/>
+                    <Label x:Name="L_maxTxtSize" Content="Taille max:" HorizontalAlignment="Left" Margin="394,43,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.548,-0.266"/>
+                    <CheckBox x:Name="CB_backupSomeFiles" Content="Sauvegarder les extensions suivantes" HorizontalAlignment="Left" Margin="46,48,0,0" VerticalAlignment="Top" Click="CB_backupSomeFiles_Click"/>
+                    <RadioButton x:Name="RB_exclusion" Content="Exclure les extensions suivantes:" HorizontalAlignment="Left" Margin="338,311,0,0" VerticalAlignment="Top" IsEnabled="False" Checked="RB_exclusion_Checked"/>
+                    <RadioButton x:Name="RB_inclusion" Content="N'inclure que les extensions suivantes" HorizontalAlignment="Left" Margin="338,291,0,0" VerticalAlignment="Top" IsEnabled="False" IsChecked="True" Checked="RB_inclusion_Checked"/>
+                    <TextBox x:Name="TB_maxTxtSize" HorizontalAlignment="Left" Height="23" Margin="463,47,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" Width="63" RenderTransformOrigin="0.233,-2.89" TextChanged="TB_maxTxtSize_TextChanged" PreviewTextInput="TB_maxTxtSize_PreviewTextInput"/>
+                    <ComboBox x:Name="CBX_sizeUnits" HorizontalAlignment="Left" Margin="531,48,0,0" VerticalAlignment="Top" Width="54" RenderTransformOrigin="0.075,3.739" SelectionChanged="CBX_sizeUnits_SelectionChanged">
+                        <ComboBoxItem Content="Ko"/>
+                        <ComboBoxItem Content="Mo"/>
+                    </ComboBox>
+                    <Label x:Name="L_caution" Content="ATTENTION : L'exclusion  est prioritaire sur la sauvegarde" HorizontalAlignment="Left" Margin="82,247,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.296,0.577"/>
+                    <Label x:Name="L_extensionToSave" Content="Extensions à sauvegarder sous la forme : .txt .zip .exe" HorizontalAlignment="Left" Margin="82,76,0,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TB_extensionsToSave" HorizontalAlignment="Left" Height="91" Margin="82,107,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="215" LostFocus="TB_extensionsToSave_LostFocus"/>
+                    <TextBox x:Name="TB_extensionsToFilter" HorizontalAlignment="Left" Height="91" Margin="82,289,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="215" LostFocus="TB_extensionsToExclude_LostFocus"/>
+                    <CheckBox x:Name="CB_useIncludeExcludeFilter" Content="Activer les filtres" HorizontalAlignment="Left" Margin="46,227,0,0" VerticalAlignment="Top" Checked="CB_useIncludeExcludeFilter_Checked" Unchecked="CB_useIncludeExcludeFilter_Unchecked"/>
+                    <CheckBox x:Name="CB_saveThumbnails" Content="Ne pas sauvegarder les vignettes" HorizontalAlignment="Left" Margin="46,411,0,0" VerticalAlignment="Top" Checked="CB_useIncludeExcludeFilter_Checked" Unchecked="CB_useIncludeExcludeFilter_Unchecked"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

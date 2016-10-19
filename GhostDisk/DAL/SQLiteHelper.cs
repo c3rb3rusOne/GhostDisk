@@ -3,6 +3,7 @@
 //using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.IO;
+using System.Windows;
 using GhostDisk.BO;
 
 namespace GhostDisk.DAL
@@ -65,7 +66,7 @@ namespace GhostDisk.DAL
         {
             try
             {
-                new SQLiteCommand(query, cnx).ExecuteNonQuery(); 
+               var x = new SQLiteCommand(query, cnx).ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -79,6 +80,41 @@ namespace GhostDisk.DAL
             }
 
             return true;
+        }
+
+        // Exécute une insertion et retourne l'Id de l'entrée insérée ou -1
+        protected long executeInsert(string query) //genericité ?
+        {
+            //SQLiteDatabase SQLiteDatabasexxx = new SQLiteDatabase();
+            //long insertedID = SQLiteDatabasexxx.insert(); // -> sql server
+
+            try
+            {
+                // Début de la définition de la transaction
+                /*SQLiteTransaction transaction = cnx.BeginTransaction(); // Tous les changement ds la bdd sont appliqué ou aucuns (rollback)
+                SQLiteCommand SQLiteCommand = cnx.CreateCommand(); //using
+                SQLiteCommand.Transaction = transaction;
+                SQLiteCommand.CommandText = query;
+                SQLiteCommand.ExecuteNonQuery();
+                id = lastInsertId(); // Exécuté avant la transaction
+                // Exécution de la transaction
+                transaction.Commit(); // Rollback()*/
+                
+                if (!(new SQLiteCommand(query, cnx).ExecuteNonQuery() > 0)) //.ExecuteScalar() .Transaction
+                    return -1;
+            }
+            catch (Exception ex)
+            {
+                if (Constantes.DEBUG)
+                {
+                    System.Windows.MessageBox.Show("Erreur requête****************");
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
+
+                return -1;
+            }
+
+            return lastInsertId();
         }
 
         protected SQLiteDataReader executeUniqueRequestQuery(string query)
@@ -114,10 +150,7 @@ namespace GhostDisk.DAL
                 SQLiteCommand commande = new SQLiteCommand(query, this.cnx); //!attention fermeture intempestive cnx
                 reader = commande.ExecuteReader();
 
-                /*while (reader.Read())
-                {
-                    //
-                }*/
+                /*while (reader.Read()) { }*/
             }
             catch (Exception ex)
             {
@@ -128,6 +161,11 @@ namespace GhostDisk.DAL
             }
 
             return reader;
+        }
+
+        protected long lastInsertId()
+        {
+            return cnx.LastInsertRowId;
         }
     }
 }
