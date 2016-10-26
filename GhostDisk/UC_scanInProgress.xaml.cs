@@ -44,16 +44,16 @@ namespace GhostDisk
 
             await Task.Run(() =>
             {
-                try
-                {
+                //try
+                //{
                     scanneur.Start_ScanDisk(source, destination, this.CancellationTokenSource.Token);
-                }
-                catch (Exception exception)
-                {
-                    MessageBox.Show("Task cancelled (Vraiment !)");
-                    MessageBox.Show(exception.ToString());
-                    returnToPreviousWiew();
-                }
+                //}
+                //catch (Exception exception)
+                //{
+                    //MessageBox.Show("Task cancelled (Vraiment !)");
+                    //MessageBox.Show(exception.ToString());
+                    //returnToPreviousWiew();
+                //}
                 
             }, this.CancellationTokenSource.Token);
 

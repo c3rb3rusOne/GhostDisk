@@ -3,6 +3,7 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Threading;
 //using System.Text;
 //using System.Threading.Tasks;
@@ -85,20 +86,31 @@ namespace GhostDisk.BLL
             return error;
         }
         
-        // Méthode récursive dossier par dossier (fichier par fichier ?)
+        // Méthode récursive dossier par dossier
         private bool FolderScan_RecursiveMode(string folderPath, string backupPath, CancellationToken CancellationToken)
         {
             // Si l'un des dossier dossier à sauvegarder ou dossier cible est manquant, sortir - Demander création dossier cible ?
-            if (folderPath == null || !Directory.Exists(folderPath))
+            if (folderPath == null || !Directory.Exists(@folderPath))
             {
                 MessageBox.Show(Properties.Resources.ERROR_MAIN_FOLDER_UNEXIST);
                 return false;
             }
 
-            //Pour chaques fichiers du dossier principal puis des sous dossier, Create file object (bdd)
-            foreach (string file in Directory.GetFiles(folderPath)) //'System.UnauthorizedAccessException'
+            //!! TEST des DROITS d'accès au dossier
+            //DirectorySecurity dirSec = Directory.GetAccessControl(folderPath);
+
+            string[] Filestab = null;
+            try
             {
-                FileInfo fileInfo = null;
+                Filestab = Directory.GetFiles(folderPath);
+            }
+            catch (UnauthorizedAccessException) { return false; }
+            
+            // Pour chaques fichiers du dossier principal puis des sous dossier, Create file object (bdd)
+            //foreach (string file in Directory.GetFiles(folderPath)) //'System.UnauthorizedAccessException'
+            foreach (string file in Filestab) // -> for
+            {
+                FileInfo fileInfo = null; // sortir ?
                 //fonction update si > 50 fich pr 3000 //!
                 throwUpdateProgressbar();
 
@@ -115,13 +127,13 @@ namespace GhostDisk.BLL
                         continue;
                 }
 
-                // Créer le fichier de sauvegarde
+                // Créer le fichier de sauvegarde / Enregistrer liste des fichiers n'ayant pus êtres sauvegardés
                 CreateFile(fileInfo, backupPath);
                 
                 // Vérifier si il n'y a pas eu une annulation de la tâche
                 if (CancellationToken.IsCancellationRequested)
                 {
-                    // ou tryy/catch return ici
+                    // ou try/catch return ici
                     CancellationToken.ThrowIfCancellationRequested();
                 }
             }
@@ -129,6 +141,7 @@ namespace GhostDisk.BLL
             // Pour chaques sous-dossiers, créer le dossier dans le dossier accueillant la sauvegarde et rappeler la fonction
             foreach (string folderInFolder in Directory.GetDirectories(folderPath))
             {
+                //test droits
                 CreateFolder(folderInFolder, backupPath);
                 FolderScan_RecursiveMode(folderInFolder, backupPath, CancellationToken);
             }
@@ -159,102 +172,177 @@ namespace GhostDisk.BLL
             // DANGER: System.IO.File.Create will overwrite the file if it already exists.
 
             // Chemin de sauvegarde du fichier (emplacement + nom + extension)
-            string BackupPath = BackupFolderPath + OriginalFileInfo.FullName.Remove(0, BaseFolderPathLenght); //BackupPath StringBuilder ? garbageCollector ?
+            string BackupPath = BackupFolderPath + @"\" + OriginalFileInfo.FullName.Remove(0, BaseFolderPathLenght); //BackupPath StringBuilder ? garbageCollector ?
 
             /*********************Exceptions selon type de fichiers (à sortir)****************************************/
-            // Si raccourci, le copier
-            if (OriginalFileInfo.Extension.Equals(".lnk"))
+            #region Cas spécial - Icônes
+            if (OriginalFileInfo.Extension.Equals(".lnk")) // à mettre ds constantes
             {
-                System.IO.File.Copy(OriginalFileInfo.FullName, BackupPath, true);
+                try
+                {
+                    System.IO.File.Copy(OriginalFileInfo.FullName, BackupPath, true);
+                }
+                catch (PathTooLongException ptle)
+                {
+                    if (Constantes.DEBUG)
+                        //MessageBox.Show("Icon: Nom de fichier trop long " + BackupPath + " - " + ptle.ToString());
+
+                    // Si le chemin du fichier est supérieur à 259: suppression des caractères en trop et ajout de --- à la fin du nom de fichier (259 = taille max des chemins sur windows < 10)
+                    if (BackupPath.Length >= 259) // ou ds catch
+                    {
+                        BackupPath = BackupPath.Remove(256 - OriginalFileInfo.Extension.Length) + "---" + OriginalFileInfo.Extension;
+                        OriginalFileInfo.CopyTo(BackupPath, true);
+                    }
+                }
+                catch (UnauthorizedAccessException uae) { return false; }
+
                 return true;
             }
+            #endregion
 
+            #region Test Option - backupSomeFiles
             // Si option backupSomeFiles activée, extension à sauvegarder et taille du fichier <= taille max admissible (unité comparaison: Kb) : copier
             if (this.options != null && this.options.backupSomeFiles)
             {
                 if (options.extensionsToBackup.Contains(OriginalFileInfo.Extension) && OriginalFileInfo.Length <= this.options.FileToSaveMaxSizeInKb)
                 {
-                    System.IO.File.Copy(OriginalFileInfo.FullName, BackupPath, true);
+                    try
+                    {
+                        //System.IO.File.Copy(OriginalFileInfo.FullName, BackupPath, true);
+                        OriginalFileInfo.CopyTo(BackupPath, true); //!! DROITS
+                    }
+                    catch (PathTooLongException ptle)
+                    {
+                        if (Constantes.DEBUG)
+                            //MessageBox.Show("File: Nom de fichier trop long " + BackupPath + " - " + ptle.ToString());
+
+                        // Si le chemin du fichier est supérieur à 259: suppression des caractères en trop et ajout de --- à la fin du nom de fichier (259 = taille max des chemins sur windows < 10)
+                        if (ptle is PathTooLongException && BackupPath.Length >= 259) // ou ds catch
+                        {
+                            BackupPath = BackupPath.Remove(256 - OriginalFileInfo.Extension.Length) + "---" +
+                                         OriginalFileInfo.Extension;
+                            OriginalFileInfo.CopyTo(BackupPath, true);
+                        }
+                    }
+                    catch (UnauthorizedAccessException uae) { return false; }
+
                     return true;
                 }
             }
+            #endregion
 
+            #region Cas spécial - Images
             // Si le fichier est une image, récupérer et sauvegarder la vignette de prévisualisation (thumbnail)
             if (OriginalFileInfo.Extension.Equals(".JPG")) //minuscules const
             {
                 Image thumbnailForFile = GetThumbnail(OriginalFileInfo.FullName);
 
-                thumbnailForFile.Save(BackupPath + OriginalFileInfo.Name);
-                thumbnailForFile.Dispose();
-                    
+                try
+                {
+                    thumbnailForFile.Save(BackupPath + OriginalFileInfo.Name);
+                }
+                catch (PathTooLongException ptle)
+                {
+                    if (BackupPath.Length >= 259)
+                    {
+                        BackupPath = BackupPath.Remove(256 - OriginalFileInfo.Extension.Length) + "---" + OriginalFileInfo.Extension;
+                        thumbnailForFile.Save(BackupPath + OriginalFileInfo.Name);
+                    }
+                }
+                catch (UnauthorizedAccessException uae) { return false; }
+                finally { thumbnailForFile.Dispose(); }
+
                 return true;
             }
-            
+            #endregion
+            /*********************Fin exceptions selon type de fichiers (à sortir)************************************/
+
+            #region Cas normaux
             // Si aucuns cas spéciaux décris plus haut alors création de la copie "vide" du fichier
             try
             {
                 using (System.IO.FileStream fs = System.IO.File.Create(BackupPath))
                 {
+                    #region Cas spécial Exe
                     // Si exe, créer fichier vierge et copier l'icone.
-                    if (OriginalFileInfo.Extension.Equals(".exe"))
+                    if (OriginalFileInfo.Extension.Equals(".exe")) //! const
                     {
                         // Set a default icon for the file.
                         Icon iconForFile = Icon.ExtractAssociatedIcon(OriginalFileInfo.FullName); //path - SystemIcons.WinLogo;
-
+                        
                         iconForFile?.Save(fs);
                         /* old way
                         if (iconForFile != null)
                             iconForFile.Save(fs); */
 
                         iconForFile?.Dispose();
-                        fs.Dispose();
-
-                        return true;
                     }
+                    #endregion
+                    fs.Dispose();
                 }
             }
-            catch (Exception ex)
+            catch (PathTooLongException ex)
             {
                 if (Constantes.DEBUG)
-                {
-                    MessageBox.Show("erreur création" + ex.Message); // const
-                }
+                    //MessageBox.Show("erreur création" + ex.Message); // const
 
+                // Si le chemin du fichier est supérieur à 259: suppression des caractères en trop et ajout de --- à la fin du nom de fichier (259 = taille max des chemins sur windows < 10)
+                if (BackupPath.Length >= 259) // ou ds catch
+                {
+                    BackupPath = BackupPath.Remove(256 - OriginalFileInfo.Extension.Length) + "---" + OriginalFileInfo.Extension;
+
+                    using (System.IO.FileStream fs = System.IO.File.Create(BackupPath))
+                    {
+                        #region Cas spécial Exe
+                        if (OriginalFileInfo.Extension.Equals(".exe")) //! const, sortir + factoriser
+                        {
+                            Icon iconForFile = Icon.ExtractAssociatedIcon(OriginalFileInfo.FullName);
+                            iconForFile?.Save(fs);
+                            iconForFile?.Dispose();
+                        }
+
+                        #endregion
+                        fs.Dispose();
+                    }
+
+                    return true;
+                }
+                
                 return false;
             }
-            /*********************Fin exceptions selon type de fichiers (à sortir)************************************/
+            catch (UnauthorizedAccessException uae) { return false; }
+            #endregion
 
             return true;
         }
 
-        // Créer ou copie les fichiers vers le dossier de sauvegarde
+        // Créer un dossier dossier dans le repertoire de sauvegarde
         private bool CreateFolder(string OriginalFolderPath, string BackupFolderPath) // Les dossiers sont-ils crées automatiquement selon le chemin des fichiers ? -> non
         {
-            //MessageBox.Show("crea dossier " + OriginalFolderPath);
-            //string fileName = System.IO.Path.GetRandomFileName();
-            //string fileName2 = "MyNewFile.txt";
-
-            // Use Combine again to add the file name to the path.
-            //pathString = System.IO.Path.Combine(pathString, fileName);
-            
             string BackupPath = null;
 
             /* Chemin de sauvegarde du dossier (chemin du dossier cible + (chemin du dossier source - le nombre de caractères
                correspondants au chemin du dossier source) */
-            BackupPath = BackupFolderPath + OriginalFolderPath.Remove(0, BaseFolderPathLenght); ;
+            BackupPath = BackupFolderPath + @"\" + OriginalFolderPath.Remove(0, BaseFolderPathLenght);
             
             try
             {
                 Directory.CreateDirectory(BackupPath);
             }
-            catch (Exception ex)
+            catch (PathTooLongException ptle) // Ajouter unhotorized acess ...
             {
                 if (Constantes.DEBUG)
+                    //MessageBox.Show("Erreur création dossier" + ptle.Message); // const
+
+                // Si le chemin du dossier est supérieur à 259: suppression des caractères en trop et ajout de --- à la fin du nom de fichier (sur windows < 10)
+                if (BackupPath.Length >= 259)
                 {
-                    MessageBox.Show("erreur création dossier" + ex.Message); // const
+                    BackupPath = BackupPath.Remove(256) + "---";
+                    Directory.CreateDirectory(BackupPath);
                 }
             }
-            
+            catch (UnauthorizedAccessException uae) { return false; }
+
             return true;
         }
 
@@ -287,7 +375,7 @@ namespace GhostDisk.BLL
             }
         }
 
-        // Ok, mais trop long (plus de 3 min) pr les gros volumes
+        // Ok, mais long (plus de 3 min) pr les gros volumes ( >800 000 fichiers)
         private bool countNbFilesInDirectoryAndSubdirectory(DirectoryInfo di)
         {
             // Compter les fichiers du dossier
